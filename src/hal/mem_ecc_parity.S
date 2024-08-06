@@ -114,10 +114,11 @@ SYMBOL(xthal_memep_inject_error)
 	//  handler checks whether test mode is on, and turns it off temporarily
 	//  to do its work.
 	//
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	rsil	a11, 15
 # endif
-
+#endif
 	//  Save current MESR and set test mode:
 
 	rsr.mesr a8

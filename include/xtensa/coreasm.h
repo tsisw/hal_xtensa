@@ -898,6 +898,7 @@
 	 */
 	.macro	abi_entry_size locsize=0, callsize=0
 #if XCHAL_HAVE_WINDOWED && !__XTENSA_CALL0_ABI__
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	.ifeq	\callsize
 	 .set	.callsz, 16
 	.else
@@ -911,6 +912,21 @@
 	    .set .callsz, 48
 	   .else
 	    .error	"abi_entry: invalid call size \callsize"
+#else
+        .ifeq   \callsize
+         .set   .callsz, 32
+        .else
+         .ifeq  \callsize-4
+          .set  .callsz, 32
+         .else
+          .ifeq \callsize-8
+           .set .callsz, 48
+          .else
+           .ifeq \callsize-12
+            .set .callsz, 64
+           .else
+            .error      "abi_entry: invalid call size \callsize"
+#endif
 	   .endif
 	  .endif
 	 .endif

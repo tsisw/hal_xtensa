@@ -51,11 +51,15 @@
 //
 DECLFUNC(xthal_get_intenable)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	rsr.intenable	a2
 # else
 	movi	a2, 0	// if no INTENABLE (no interrupts), tell caller nothing is enabled
 # endif
+#else
+	movi    a2, 0
+#endif
 	abi_return
 	endfunc
 
@@ -65,9 +69,11 @@ DECLFUNC(xthal_get_intenable)
 //
 DECLFUNC(xthal_set_intenable)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	wsr.intenable	a2
 # endif
+#endif
 	abi_return
 	endfunc
 
@@ -82,11 +88,15 @@ DECLFUNC(xthal_set_intenable)
 //
 DECLFUNC (xthal_get_interrupt)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	rsr.interrupt	a2
 # else
 	movi	a2, 0	// if no INTERRUPT (no interrupts), tell caller nothing is pending
 # endif
+#else
+	movi	a2, 0
+#endif
 	abi_return
 	endfunc
 
@@ -94,11 +104,15 @@ DECLFUNC (xthal_get_interrupt)
 
 DECLFUNC (xthal_get_intread)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	rsr.interrupt	a2
 # else
 	movi	a2, 0	// if no INTERRUPT (no interrupts), tell caller nothing is pending
 # endif
+#else
+	movi	a2, 0
+#endif
 	abi_return
 	endfunc
 
@@ -108,9 +122,11 @@ DECLFUNC (xthal_get_intread)
 //
 DECLFUNC(xthal_set_intset)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	wsr.intset	a2
 # endif
+#endif
 	abi_return
 	endfunc
 
@@ -119,9 +135,11 @@ DECLFUNC(xthal_set_intset)
 //
 DECLFUNC(xthal_set_intclear)
 	abi_entry
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 # if XCHAL_HAVE_INTERRUPTS
 	wsr.intclear	a2
 # endif
+#endif
 	abi_return
 	endfunc
 
@@ -192,8 +210,9 @@ xthal_set_vpri_nw_common:
 	 *  and is cleaner.
 	 */
 	//  Get PS and mask off INTLEVEL:
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsil	a6, 1		// save a6 = PS, set PS.INTLEVEL = 1
-
+#endif
 	//  Clear PS.WOE.  (Can we get rid of this?!!!!!):
 	movi	a3, ~0x00040000	// mask to...
 	rsr.ps	a5		// get and save a6 = PS
@@ -209,8 +228,10 @@ xthal_set_vpri_nw_common:
 //a2,a3,a4,a5,a6
 	l32i	a3, a3, XTHAL_VPRI_ENABLEMAP_OFS	// get the per-level mask
 	and	a3, a5, a3	// new INTENABLE value according to new intlevel
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.intenable	a3	// set it!
 //a2,a4,a6
+#endif
 
 	l8ui	a5, a4, XTHAL_VPRI_VPRI_OFS	// previous virtual priority
 	s8i	a2, a4, XTHAL_VPRI_VPRI_OFS	// new virtual priority
@@ -288,9 +309,10 @@ xthal_set_vpri_common1:
 	 *  Note that we accessed a4 and don't access any further than a6,
 	 *  so we won't cause any spills, so we can leave WOE enabled.
 	 */
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	//  Get PS and mask off INTLEVEL:
 	rsil	a6, 1		// save a6 = PS, set PS.INTLEVEL = 1
-
+#endif
 	l8ui	a7, a4, XTHAL_VPRI_VPRI_OFS	// previous virtual priority (vpri)
 
 	/*  Get mask of interrupts to be turned off at requested level:  */
@@ -299,8 +321,9 @@ xthal_set_vpri_common1:
 	l32i	a3, a3, XTHAL_VPRI_ENABLEMAP_OFS	// get the per-level mask
 	s8i	a2, a4, XTHAL_VPRI_VPRI_OFS	// new virtual priority (in load-slot)
 	and	a3, a5, a3	// new INTENABLE value according to new intlevel
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.intenable	a3	// set it!
-
+#endif
 	wsr.ps	a6		// restore PS.INTLEVEL
 	rsync
 
@@ -339,6 +362,7 @@ DECLFUNC(xthal_set_vpri_intlevel)
 //  Equivalent to xthal_set_vpri(0x1F);
 //  Returns previous virtual interrupt priority.
 //
+
 DECLFUNC(xthal_set_vpri_lock)
 	abi_entry
 # if XCHAL_HAVE_INTERRUPTS
@@ -405,8 +429,10 @@ _SYM(xthal_get_intpending_nw)
 	    map[0]                = 0  (unused; for alignment)
 	*/
 
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.interrupt	a4	// a4 = mask of interrupts pending, including those disabled
 	rsr.intenable	a2	// a2 = mask of interrupts enabled
+#endif
 	movi	a3, Xthal_vpri_state
 	and	a4, a2, a4	// a4 = mask of enabled interrupts pending
 	beqz	a4, gipfail	// if none (can happen for spurious level-triggered interrupts,
@@ -454,7 +480,9 @@ _SYM(xthal_get_intpending_nw)
 	//	a2,a6 = available
 
 	//  Lock interrupts during virtual priority data structure transaction:
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	//rsil	a6, 1			// set PS.INTLEVEL = 1 (a6 ignored)
+#endif
 	//	a2,a6 = available
 
 	//  The highest priority interrupt(s) in a4 is at softpri = (a5-a3) / 4.
@@ -474,18 +502,19 @@ _SYM(xthal_get_intpending_nw)
 	l32i	a6, a3, XTHAL_VPRI_ENABLED_OFS		// get global mask
 	sub	a5, a5, a3		// a5 = softpri * 4 (for below; here for efficiency)
 	and	a2, a2, a6				// and together
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.intenable	a2		// disable interrupts at or below new vpri
 	//	a2,a6 = available
-
+#endif
 	//  Update new virtual priority:
 	l8ui	a6, a3, XTHAL_VPRI_VPRI_OFS		// get old vpri (returned)
 	srli	a5, a5, 2		// a5 = softpri  (0..15)
 	addi	a5, a5, 0x10		// a5 = 0x10 + softpri = new virtual priority
 	s8i	a5, a3, XTHAL_VPRI_VPRI_OFS		// store new vpri (returned)
-
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	//  Undo the temporary lock (if was at PS.INTLEVEL > 1):
 	//rsil	a2, 1
-
+#endif
 	mov	a3, a4		// save for the caller (in case it wants it?)
 
 	//  Choose one of the set of highest-vpri pending interrupts to process.
@@ -511,7 +540,9 @@ _SYM(xthal_get_intpending_nw)
 	//movi	a2, CLEARABLE_INTLEVEL1_MASK
 	//and	a2, a2, a4
 	//wsr.intclear	a2
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.intclear	a4	// no effect if a4 not a software or edge-triggered or write-error interrupt
+#endif
 #  endif
 
 	//  Convert the single-bit interrupt mask to an interrupt number.
@@ -550,8 +581,9 @@ gipfail:
 DECLFUNC(xthal_vpri_lock)
 	abi_entry
 # if XCHAL_HAVE_INTERRUPTS
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsil	a6, 1				// save a6 = PS, set PS.INTLEVEL = 1
-
+#endif
 	//     if( Xthal_vpri_level < Xthal_vpri_locklevel )
 	//
 	movi	a2, Xthal_vpri_state		// a2 := address of global var. Xthal_vpri_state
@@ -567,8 +599,9 @@ DECLFUNC(xthal_vpri_lock)
 	l32i	a3, a3, XTHAL_VPRI_ENABLEMAP_OFS // a3 := Xthal_vpri_enablemap[0][Xthal_vpri_locklevel]
 	//interlock
 	and	a2, a4, a3
+#ifndef CONFIG_XTENSA_TENSILICA_NX
   	wsr.intenable	a2
-
+#endif
 xthal_vpri_lock_done:
 	wsr.ps	a6				// restore PS.INTLEVEL
 	rsync
@@ -600,9 +633,10 @@ DECLFUNC(xthal_vpri_unlock)
 	l32i	a3, a3, XTHAL_VPRI_ENABLEMAP_OFS // a3 := Xthal_vpri_enablemap[0][Xthal_vpri_level]
 	//interlock
 	and	a2, a4, a3
-  	wsr.intenable	a2
+#ifndef CONFIG_XTENSA_TENSILICA_NX  
+	wsr.intenable	a2
+#endif
 # endif
 	abi_return
 	endfunc
-
 

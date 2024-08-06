@@ -122,11 +122,14 @@ xthal_spill_registers_into_stack_nw:	// BACKWARD COMPATIBILITY ONLY - see above
 	 * so the number of start bits in WINDOWSTART is NAREG/4,
 	 * and the size of WINDOWSTART can be 8 or 16.
 	 */
-
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowbase	a2
+#endif
 	addi	a2, a2, 1
 	ssr	a2		// sar = WINDOWBASE + 1
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowstart	a3
+#endif
 	srl	a2, a3		// a2 is 0... | 000000xxxxxxxxxx = WINDOWSTART >> sar
 	sll	a3, a3		// a3 is 1yyyyy0000000000 | 0... = WINDOWSTART << (32 - sar)
 	bgez	a3, .Linvalid_ws	// verify that msbit is indeed set
@@ -152,39 +155,47 @@ xthal_spill_registers_into_stack_nw:	// BACKWARD COMPATIBILITY ONLY - see above
 	nsau    a3, a3		// get index of that bit, numbered from msbit (32 if absent)
 	ssl	a3		// set sar = 32 - a3 = bit index numbered from lsbit + 1
 #else /* XCHAL_HAVE_NSA */
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowstart	a2	// temporarily save rotated start bits
 				// (we can use WINDOWSTART because WOE=0)
-
+#endif
 	//  NOTE:  this could be optimized a bit, by explicit coding rather than the macro.
 	find_ls_one	a3, a2	// set a3 to index of lsmost bit set in a2 (a2 clobbered)
 
 	addi	a2, a3, 1	// index+1
 	ssr	a2		// set sar = index + 1
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowstart	a2	// restore a2 (rotated start bits)
+#endif
 #endif /* XCHAL_HAVE_NSA */
 	srl	a2, a2		// right-justify the rotated start bits (dropping lsbit set)
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowstart	a2	// save rotated + justified window start bits,
 				//  because a2 will disappear when modifying WINDOWBASE
 				// again, we can use WINDOWSTART because WOE=0
-
+#endif
 	/*
 	 *  Rotate WindowBase so that a0 of the next window to spill is in a4
 	 *  (ie. leaving us with a2 and a3 to play with, because a0 and a1
 	 *  may be those of the original window which we must preserve).
 	 */
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowbase	a2
+#endif
 #if XCHAL_HAVE_NSA
 	addi	a2, a2, 31
 	sub	a3, a2, a3	// a3 = WINDOWBASE + index = WINDOWBASE + (31 - msbit_index)
 #else /* XCHAL_HAVE_NSA */
 	add	a3, a2, a3	// a3 = WINDOWBASE + index
 #endif /* XCHAL_HAVE_NSA */
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowbase	a3	// effectively do:  rotw index
+#endif
 	rsync			// wait for write to WINDOWBASE to complete
 	//  Now our registers have changed!
-
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowstart	a2	// restore a2 (rotated + justified window start bits)
-
+#endif
 	/*
 	 *  We are now ready to start the window spill loop.
 	 *  Relative to the above, a2 and WINDOWBASE are now as follows:
@@ -285,11 +296,15 @@ xthal_spill_registers_into_stack_nw:	// BACKWARD COMPATIBILITY ONLY - see above
 
 .Ldone:
 	rotw	1		// back to the original window
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowbase	a2	// get (original) window base
+#endif
 	ssl	a2		// setup for shift left by WINDOWBASE
 	movi	a2, 1
 	sll	a2, a2		// compute new WINDOWSTART = 1<<WINDOWBASE
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowstart	a2	// and apply it
+#endif
 	rsync
 	movi	a2, 0		// done!
 	ret
@@ -317,7 +332,9 @@ xthal_spill_registers_into_stack_nw:	// BACKWARD COMPATIBILITY ONLY - see above
 .Linvalid_window:
 	slli	a2, a2, 1	// space for missing start bit
 	addi	a2, a2, 1	// add missing start bit
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	rsr.windowbase	a3	// get current WINDOWBASE
+#endif
 	bbsi.l	a2, WSBITS-1, 2f	// branch if current WINDOWBASE==original
 1:	addi	a3, a3, -1	// decrement towards original WINDOWBASE
 	slli	a2, a2, 1	// shift towards original WINDOWSTART alignment
@@ -330,11 +347,15 @@ xthal_spill_registers_into_stack_nw:	// BACKWARD COMPATIBILITY ONLY - see above
 	slli	a3, a2, 32-WSBITS	// left-justify start bits
 	src	a2, a2, a3	// rotate left by original WINDOWBASE
 	extui	a2, a2, 0, WSBITS	// keep only significant start bits
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowstart	a2	// we've cleared only start bits of spilled windows
+#endif
 	rsr.sar	a3		// retrieve 32 - original WINDOWBASE
 	movi	a2, 32
 	sub	a3, a2, a3	// restore original WINDOWBASE
+#ifndef CONFIG_XTENSA_TENSILICA_NX
 	wsr.windowbase	a3	// back to original WINDOWBASE
+#endif
 	rsync
 
 	movi	a2, 2		// indicate invalid window size
