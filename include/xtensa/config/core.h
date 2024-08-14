@@ -906,6 +906,24 @@
 
 #define XCHAL_SNOOP_LB_MEMCTL_DEFAULT	(_MEMCTL_SNOOP_EN | _MEMCTL_L0IBUF_EN)
 
+#if XCHAL_DCACHE_IS_COHERENT
+#define XCHAL_MEMCTL_SNOOP_EN		(0x02)	/* enable snoop */
+#else
+#define XCHAL_MEMCTL_SNOOP_EN		(0x00)	/* don't enable snoop */
+#endif
+
+#if (XCHAL_LOOP_BUFFER_SIZE == 0) || XCHAL_ERRATUM_453
+#define XCHAL_MEMCTL_L0IBUF_EN		(0x00)	/* no loop buffer or don't enable */
+#else
+#define XCHAL_MEMCTL_L0IBUF_EN		(0x01)	/* enable loop buffer */
+#endif
+
+#if XCHAL_HAVE_BRANCH_PREDICTION
+#define XCHAL_MEMCTL_BP_EN		(0x08)	/* enable branch prediction */
+#else
+#define XCHAL_MEMCTL_BP_EN		(0x00)	/* don't enable BP */
+#endif
+#define XCHAL_MEMCTL_DEFAULT_POST	(XCHAL_MEMCTL_SNOOP_EN | XCHAL_MEMCTL_L0IBUF_EN | XCHAL_MEMCTL_BP_EN)
 
 /*----------------------------------------------------------------------
 				MMU

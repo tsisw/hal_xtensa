@@ -106,6 +106,8 @@
 #define PS_INTLEVEL_SHIFT	0
 #define PS_INTLEVEL_MASK	0x0000000F
 #define PS_INTLEVEL(n)		((n)&PS_INTLEVEL_MASK)		/* n = 0..15 */
+#define       PS_DI_MASK                      0x00000008
+#define       PS_DI                           PS_DI_MASK
 /*  ABI-derived field values:  */
 #ifdef __XTENSA_CALL0_ABI__
 #define PS_WOE_ABI		0

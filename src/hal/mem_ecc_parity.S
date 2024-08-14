@@ -118,6 +118,11 @@ SYMBOL(xthal_memep_inject_error)
 # if XCHAL_HAVE_INTERRUPTS
 	rsil	a11, 15
 # endif
+#else
+# if XCHAL_HAVE_INTERRUPTS
+	movi	a11, PS_DI
+	xps	a11, a11
+# endif	
 #endif
 	//  Save current MESR and set test mode:
 

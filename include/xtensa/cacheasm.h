@@ -958,5 +958,33 @@
 #endif
 	.endm
 
+/* Added  code for XEA3 : CONFIG_XTENSA_TENSILICA_NX*/
+
+/*
+ * Turn on cache coherence.
+ *
+ * WARNING This macro assumes exclusive access to the L2CC.  It must
+ * be protected with a mutex to ensure that the Coherence Control register
+ * is not corrupted by another core.
+ *
+ * WARNING Any interrupt that tries to change MEMCTL will see its changes
+ * dropped if the interrupt comes in the middle of this routine.  If this
+ * might be an issue, call this routine with interrupts disabled.
+ *
+ * Parameters are:
+ *	ar, as, at	three scratch address registers (all clobbered)
+ */
+	.macro	cache_coherence_on_memctl        ar at
+#if XCHAL_DCACHE_IS_COHERENT
+	/*  Have MEMCTL.  Enable snoop responses.  */
+	memctl_read	\ar
+	_XT_MOVI		\at, MEMCTL_SNOOP_EN
+	or		\ar, \ar, \at
+	memctl_write	\ar
+#endif
+	.endm
+
+        	
+
 #endif /*XTENSA_CACHEASM_H*/
 
