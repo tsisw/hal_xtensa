@@ -39,7 +39,7 @@
 
 DECLFUNC(xthal_save_extra)
 	abi_entry
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	xchal_extra_store_funcbody
 #endif
 	abi_return
@@ -56,7 +56,7 @@ DECLFUNC(xthal_save_extra)
 
 DECLFUNC(xthal_restore_extra)
 	abi_entry
-#ifndef CONFIG_XTENSA_TENSILICA_NX	
+#ifndef XCHAL_HAVE_XEA3	
 	xchal_extra_load_funcbody
 #endif
 	abi_return

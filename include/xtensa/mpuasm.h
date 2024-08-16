@@ -36,7 +36,7 @@
  * 	a_temp1, a_temp2.	=>  address register temporaries
  * 	a_temp3, a_temp4   
  */
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 .macro mpu_write_map a_map, a_num_entries, a_temp1, a_temp2, a_temp3, a_temp4
 #if XCHAL_HAVE_MPU
 	movi	\a_temp1, 0
@@ -86,7 +86,7 @@
 4:
 #endif
 .endm
-#else/* XEA3 : CONFIG_XTENSA_TENSILICA_NX*/
+#else/* XEA3 : XCHAL_HAVE_XEA3*/
 
 
 .macro mpu_write_map a_map, a_num_entries, a_temp1, a_temp2, a_temp3, a_temp4, a_temp5, a_temp6, a_temp7

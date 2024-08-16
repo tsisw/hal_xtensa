@@ -898,7 +898,7 @@
 	 */
 	.macro	abi_entry_size locsize=0, callsize=0
 #if XCHAL_HAVE_WINDOWED && !__XTENSA_CALL0_ABI__
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	.ifeq	\callsize
 	 .set	.callsz, 16
 	.else

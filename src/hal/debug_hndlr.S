@@ -75,7 +75,7 @@
 	.global xthal_debugexc_defhndlr_nw
 	.align 4
 xthal_debugexc_defhndlr_nw:
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	rsr.debugcause	a3		// get cause of debug exception
 #endif
 	//  Check for possible debug causes, in priority order.
@@ -86,7 +86,7 @@ xthal_debugexc_defhndlr_nw:
 
 	bbci.l	a3, DEBUGCAUSE_ICOUNT_SHIFT, 1f	// ICOUNT trap?
 	movi	a3, 0
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	wsr.icount a3				// clear ICOUNT
 #endif
 	j	3f
@@ -98,7 +98,7 @@ xthal_debugexc_defhndlr_nw:
 #if XCHAL_NUM_IBREAK > 0
 1:	bbci.l	a3, DEBUGCAUSE_IBREAK_SHIFT, 1f	// IBREAK match?
 	movi	a3, 0
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	wsr.ibreakenable a3			// disable IBREAK traps
 #endif
 	j	3f
@@ -120,21 +120,21 @@ xthal_debugexc_defhndlr_nw:
 	//l8ui	a3, a3, 1			// get first 4-bit operand of BREAK (in 2nd byte)
 	//extui	a3, a3, (XCHAL_HAVE_BE*4), 4	// pos depends on endianness
 	//bnei	a3, 1, 3f			// is it a BREAK 1,x instruction?
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	readsr	epc XCHAL_DEBUGLEVEL a3		// get PC pointing to BREAK
 #endif
 	addi	a3, a3, 3			// skip BREAK instruction
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	writesr	epc XCHAL_DEBUGLEVEL a3		// update PC
 #endif
 	j	3f
 
 1:	bbci.l	a3, DEBUGCAUSE_BREAKN_SHIFT, 1f	// BREAK.N instruction?
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	readsr	epc XCHAL_DEBUGLEVEL a3		// get PC pointing to BREAK
 #endif
 	addi	a3, a3, 2			// skip BREAK.N instruction
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 	writesr	epc XCHAL_DEBUGLEVEL a3		// update PC
 #endif
 	j	3f
@@ -144,7 +144,7 @@ xthal_debugexc_defhndlr_nw:
 	j	3f
 
 1:	//  Unknown debug case?  ignore
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 3:	readsr	excsave XCHAL_DEBUGLEVEL a3	// restore a3
 	rfi	XCHAL_DEBUGLEVEL		// return from debug exception
 #else

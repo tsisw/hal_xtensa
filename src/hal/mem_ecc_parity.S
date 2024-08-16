@@ -114,7 +114,7 @@ SYMBOL(xthal_memep_inject_error)
 	//  handler checks whether test mode is on, and turns it off temporarily
 	//  to do its work.
 	//
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 # if XCHAL_HAVE_INTERRUPTS
 	rsil	a11, 15
 # endif

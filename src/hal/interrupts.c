@@ -170,7 +170,7 @@ const unsigned char Xthal_num_interrupts = XCHAL_NUM_INTERRUPTS;
 const unsigned char Xthal_excm_level = XCHAL_EXCM_LEVEL;
 
 
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 // mask of interrupts at each intlevel
 const unsigned Xthal_intlevel_mask[16] = { 
     XCHAL_INTLEVEL_MASKS
@@ -226,7 +226,7 @@ XtHalVPriState  Xthal_vpri_state = {
     0x00000000,	/* enabled */
     0x00000000,	/* lockmask (unused?) */
     0,		/* pad1 */
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 #define DEFAULT_ENABLEMAP(levela,levelb)	\
      { (XCHAL_INTLEVEL15_ANDBELOW_MASK & ~(XTHAL_DEFAULT_SOFTPRI > 0 ? levela : levelb)), \
        (XCHAL_INTLEVEL15_ANDBELOW_MASK & ~(XTHAL_DEFAULT_SOFTPRI > 1 ? levela : levelb)), \
@@ -330,7 +330,7 @@ XtHalVPriState  Xthal_vpri_state = {
 #if XCHAL_NUM_INTLEVELS >= 6
         DEFAULT_ENABLEMAP(XCHAL_INTLEVEL5_ANDBELOW_MASK,XCHAL_INTLEVEL6_ANDBELOW_MASK),
 #endif
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 #if XCHAL_NUM_INTLEVELS >= 7
 # error Interrupt levels greater than 6 not currently supported in the HAL interrupt routines.
 #endif
@@ -357,7 +357,7 @@ XtHalVPriState  Xthal_vpri_state = {
 #if XCHAL_NUM_INTLEVELS >= 6    /* set for default soft priority of 4: */
      {0,0,0,0, XCHAL_INTLEVEL6_MASK,0,0,0, 0,0,0,0, 0,0,0,0},
 #endif
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
 #if XCHAL_NUM_INTLEVELS >= 7    /* set for default soft priority of 4: */
 # error Interrupt levels greater than 6 not currently supported in the HAL interrupt routines.
 #endif
@@ -382,7 +382,7 @@ unsigned char	Xthal_int_vpri[32] = {
     DEFAULT_INTVPRI( XCHAL_INT6_LEVEL ),
     DEFAULT_INTVPRI( XCHAL_INT7_LEVEL ),
     DEFAULT_INTVPRI( XCHAL_INT8_LEVEL ),
-#ifndef CONFIG_XTENSA_TENSILICA_NX
+#ifndef XCHAL_HAVE_XEA3
     DEFAULT_INTVPRI( XCHAL_INT9_LEVEL ),
     DEFAULT_INTVPRI( XCHAL_INT10_LEVEL ),
     DEFAULT_INTVPRI( XCHAL_INT11_LEVEL ),
