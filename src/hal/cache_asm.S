@@ -362,7 +362,7 @@ DECLFUNC(xthal_icache_all_invalidate)
 // invalidate the dcache
 //----------------------------------------------------------------------
 
-
+#ifndef XCHAL_HAVE_XEA3
 
 // void xthal_dcache_all_invalidate(void);
 
@@ -371,7 +371,16 @@ DECLFUNC(xthal_dcache_all_invalidate)
 	dcache_invalidate_all	a2, a3
 	abi_return
 	endfunc
+#else
+	// void xthal_dcache_all_invalidate(void);
 
+DECLFUNC(xthal_dcache_all_invalidate)
+	abi_entry
+	//dcache_invalidate_all	P0, P1, P2
+	dcache_invalidate_all	a2, a3, a4
+	abi_return
+	endfunc
+#endif
 //----------------------------------------------------------------------
 // write dcache dirty data
 //----------------------------------------------------------------------

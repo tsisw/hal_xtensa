@@ -452,7 +452,7 @@
 
 /***************************   DATA CACHE   ***************************/
 
-
+#ifndef XCHAL_HAVE_XEA3
 
 /*
  *  Reset/initialize the data cache by simply invalidating it
@@ -466,7 +466,59 @@
 	dcache_invalidate_all	\aa, \ab, \loopokay
 	.endm
 
+#else
+	.macro	dcache_reset	aa, ab, ac, loopokay=0
+	dcache_unlock_all	\aa, \ab, \loopokay
+	dcache_invalidate_all	\aa, \ab, \ac, \loopokay
+	dcache_reset_data	\aa, \ab, \ac, \loopokay
+	.endm
 
+/*
+ *  Initialize data (not tags) of the entire data cache, if needed.
+ *  At present, this is only needed on block-prefetch in combination with ECC.
+ *  This is only available with RG and later releases, which also have SDCW.
+ *  Issue:  prefetch-and-modify marks a line valid without touching its data,
+ *  so any load of the prefetch-and-modified area before storing to it, or
+ *  store narrower than ECC width (if ECC is wider than one byte, meaning
+ *  XCHAL_DCACHE_ECC_WIDTH > 1), may encounter an invalid ECC if this is the
+ *  first time since reset this particular line got used.
+ *  Although possibly deemed more serious on stores, this workaround is applied
+ *  on loads too, thus regardless of XCHAL_DCACHE_ECC_WIDTH, and regardless of
+ *  ECC vs PARITY..
+ *
+ *  NOTE:  Right now this is only done when cache test instructions (including
+ *  SDCW) are configured; an alternate method given a range of memory at least
+ *  as large as dcache needs to be used otherwise.
+ *
+ *  Parameters:
+ *	aa, ab, ac		unique address registers (temporaries)
+ */
+	.macro	dcache_reset_data	aa, ab, ac, loopokay=1
+#if XCHAL_DCACHE_SIZE > 0 && XCHAL_HW_MIN_VERSION >= XTENSA_HWVERSION_RG_2015_0 && XCHAL_HAVE_CACHE_BLOCKOPS && XCHAL_DCACHE_ECC_PARITY != 0 && XCHAL_HAVE_DCACHE_TEST
+	_XT_MOVI	\aa, 0
+# if XCHAL_HAVE_LOOPS && !XCHAL_ERRATUM_497
+	.ifne	\loopokay
+	_XT_MOVI	\ab, XCHAL_DCACHE_SIZE/4
+	_XT_MOVI	\ac, 0
+	_XT_LOOP	\ab, .Lend_dcache_reset_data\@
+	sdcw	\aa, \ac
+	addi	\ac, \ac, 4
+.Lend_dcache_reset_data\@:
+# else
+	.ifne	0
+# endif
+	.else
+	_XT_MOVI	\ab, XCHAL_DCACHE_SIZE
+.Loop_dcache_reset_data\@:
+	addi	\ab, \ab, -4
+	sdcw	\aa, \ab
+	bnez	\ab, .Loop_dcache_reset_data\@
+	.endif
+#endif
+	.endm
+
+
+#endif
 
 
 /*
@@ -615,7 +667,7 @@
 	.endm
 
 
-
+#ifndef XCHAL_HAVE_XEA3
 /*
  *  Invalidate entire data cache.
  *
@@ -630,7 +682,28 @@
 	//  End of data cache invalidation
 #endif
 	.endm
-
+#else
+	.macro	dcache_invalidate_all	aa, ab, ac, loopokay=1
+#if XCHAL_DCACHE_SIZE > 0
+	//  Data cache invalidation:
+#if defined(XCHAL_DCACHE_LINES_PER_TAG_LOG2) && XCHAL_DCACHE_LINES_PER_TAG_LOG2
+        // On NX, dii invalidates all ways and all lines associated with
+        // a cache tag.  So we can use a single loop and invalidate only
+        // the first line in associated with a cache tag.
+        // in essence we are just replacing the line size with the sector size
+        // and reusing the 1-line/tag code.
+        // not this applies only to dii and not to diwb or diwbi
+	cache_index_all	dii, XCHAL_DCACHE_SIZE, \
+		XCHAL_DCACHE_LINESIZE  * (1<<XCHAL_DCACHE_LINES_PER_TAG_LOG2), \
+		XCHAL_DCACHE_WAYS, \aa, \ab, \loopokay, 1020
+#else
+	cache_index_all	dii, XCHAL_DCACHE_SIZE, XCHAL_DCACHE_LINESIZE, XCHAL_DCACHE_WAYS, \aa, \ab, \loopokay, 1020
+#endif
+	dcache_sync	\aa
+	//  End of data cache invalidation
+#endif
+	.endm
+#endif
 
 
 /*
@@ -717,7 +790,7 @@
 #endif
 	.endm
 
-
+#ifndef XCHAL_HAVE_XEA3
 
 /*
  *  Writeback and invalidate entire data cache.
@@ -731,14 +804,43 @@
 	cache_index_all		diwbi, XCHAL_DCACHE_SIZE, XCHAL_DCACHE_LINESIZE, 1, \aa, \ab, \loopokay, 240, \awb
 	dcache_sync	\aa, wbtype=1
 #else /*writeback*/
+
 	//  Data cache does not support writeback, so just invalidate: */
 	dcache_invalidate_all	\aa, \ab, \loopokay
+
 #endif /*writeback*/
 	//  End of data cache writeback and invalidate
 #endif
 	.endm
 
+#else
+/*
+ *  Writeback and invalidate entire data cache.
+ *  Parameters:
+ *	aa, ab, ac		unique address registers (temporaries)
+ *	loopokay		if 1, then use loop instructions if available
+ */
+	.macro	dcache_writeback_inv_all	aa, ab, ac, loopokay=1
+#if XCHAL_DCACHE_SIZE > 0
+	//  Data cache writeback and invalidate:
+#if XCHAL_DCACHE_IS_WRITEBACK
+#if defined(XCHAL_DCACHE_LINES_PER_TAG_LOG2) && XCHAL_DCACHE_LINES_PER_TAG_LOG2
+	cache_index_all_NXtag	diwbi, XCHAL_DCACHE_SIZE, \
+			XCHAL_DCACHE_LINESIZE, 1, XCHAL_DCACHE_LINES_PER_TAG_LOG2, \
+			\aa, \ab, \ac, \loopokay, 240
+#else
+	cache_index_all		diwbi, XCHAL_DCACHE_SIZE, XCHAL_DCACHE_LINESIZE, 1, \aa, \ab, \loopokay, 240, \ac
+#endif
+	dcache_sync	\aa, wbtype=1
+#else /*writeback*/
+	//  Data cache does not support writeback, so just invalidate: */
+	dcache_invalidate_all	\aa, \ab, \ac, \loopokay
+#endif /*writeback*/
+	//  End of data cache writeback and invalidate
+#endif
+	.endm
 
+#endif
 
 
 /*
